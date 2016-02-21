@@ -19,8 +19,6 @@ package org.jetbrains.anko
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
-import android.content.DialogInterface.OnClickListener
-import android.content.DialogInterface.OnKeyListener
 import android.database.Cursor
 import android.graphics.drawable.Drawable
 import android.view.KeyEvent
@@ -28,139 +26,113 @@ import android.view.View
 import android.view.ViewManager
 import android.widget.ListAdapter
 
-public class AlertDialogBuilder(val ctx: Context) {
-    public val builder: AlertDialog.Builder = AlertDialog.Builder(ctx)
+class AlertDialogBuilder(val ctx: Context) {
+    val builder: AlertDialog.Builder = AlertDialog.Builder(ctx)
     protected var dialog: AlertDialog? = null
 
-    public fun dismiss() {
+    constructor(ankoContext: AnkoContext<*>) : this(ankoContext.ctx)
+
+    fun dismiss() {
         dialog?.dismiss()
     }
 
-    public fun show(): AlertDialogBuilder {
+    fun show(): AlertDialogBuilder {
         dialog = builder.create()
         dialog!!.show()
         return this
     }
 
-    public fun title(title: CharSequence) {
+    fun title(title: CharSequence) {
         builder.setTitle(title)
     }
 
-    public fun title(resource: Int) {
+    fun title(resource: Int) {
         builder.setTitle(resource)
     }
 
-    public fun message(title: CharSequence) {
+    fun message(title: CharSequence) {
         builder.setMessage(title)
     }
 
-    public fun message(resource: Int) {
+    fun message(resource: Int) {
         builder.setMessage(resource)
     }
 
-    public fun icon(icon: Int) {
+    fun icon(icon: Int) {
         builder.setIcon(icon)
     }
 
-    public fun icon(icon: Drawable) {
+    fun icon(icon: Drawable) {
         builder.setIcon(icon)
     }
 
-    public fun customTitle(title: View) {
+    fun customTitle(title: View) {
         builder.setCustomTitle(title)
     }
 
-    public fun customView(view: View) {
+    fun customView(view: View) {
         builder.setView(view)
     }
 
-    public fun customView(dsl: ViewManager.() -> Unit) {
-        val view = ctx.UI(dsl).toView()
+    fun customView(dsl: ViewManager.() -> Unit) {
+        val view = ctx.UI(dsl).view
         builder.setView(view)
     }
 
-    public fun cancellable(value: Boolean = true) {
+    fun cancellable(value: Boolean = true) {
         builder.setCancelable(value)
     }
 
-    public fun onCancel(f: () -> Unit) {
+    fun onCancel(f: () -> Unit) {
         builder.setOnCancelListener { f() }
     }
 
-    public fun onKey(f: (keyCode: Int, e: KeyEvent) -> Boolean) {
-        builder.setOnKeyListener(object : OnKeyListener {
-            override fun onKey(dialog: DialogInterface?, keyCode: Int, event: KeyEvent): Boolean {
-                return f(keyCode, event)
-            }
-        })
+    fun onKey(f: (keyCode: Int, e: KeyEvent) -> Boolean) {
+        builder.setOnKeyListener({ dialog, keyCode, event -> f(keyCode, event) })
     }
 
-    public fun neutralButton(textResource: Int = android.R.string.ok, f: DialogInterface.() -> Unit = { dismiss() }) {
+    fun neutralButton(textResource: Int = android.R.string.ok, f: DialogInterface.() -> Unit = { dismiss() }) {
         neutralButton(ctx.getString(textResource), f)
     }
 
-    public fun neutralButton(title: String, f: DialogInterface.() -> Unit = { dismiss() }) {
-        builder.setNeutralButton(title, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                dialog.f()
-            }
-        })
+    fun neutralButton(title: String, f: DialogInterface.() -> Unit = { dismiss() }) {
+        builder.setNeutralButton(title, { dialog, which -> dialog.f() })
     }
 
-    public fun positiveButton(textResource: Int = android.R.string.ok, f: DialogInterface.() -> Unit) {
+    fun positiveButton(textResource: Int = android.R.string.ok, f: DialogInterface.() -> Unit) {
         positiveButton(ctx.getString(textResource), f)
     }
 
-    public fun positiveButton(title: String, f: DialogInterface.() -> Unit) {
-        builder.setPositiveButton(title, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                dialog.f()
-            }
-        })
+    fun positiveButton(title: String, f: DialogInterface.() -> Unit) {
+        builder.setPositiveButton(title, { dialog, which -> dialog.f() })
     }
 
-    public fun negativeButton(textResource: Int = android.R.string.ok, f: DialogInterface.() -> Unit = { dismiss() }) {
+    fun negativeButton(textResource: Int = android.R.string.cancel, f: DialogInterface.() -> Unit = { dismiss() }) {
         negativeButton(ctx.getString(textResource), f)
     }
 
-    public fun negativeButton(title: String, f: DialogInterface.() -> Unit = { dismiss() }) {
-        builder.setNegativeButton(title, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                dialog.f()
-            }
-        })
+    fun negativeButton(title: String, f: DialogInterface.() -> Unit = { dismiss() }) {
+        builder.setNegativeButton(title, { dialog, which -> dialog.f() })
     }
 
-    public fun items(itemsId: Int, f: (which: Int) -> Unit) {
+    fun items(itemsId: Int, f: (which: Int) -> Unit) {
         items(ctx.resources!!.getTextArray(itemsId), f)
     }
 
-    public fun items(items: List<CharSequence>, f: (which: Int) -> Unit) {
+    fun items(items: List<CharSequence>, f: (which: Int) -> Unit) {
         items(items.toTypedArray(), f)
     }
 
-    public fun items(items: Array<CharSequence>, f: (which: Int) -> Unit) {
-        builder.setItems(items, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                f(which)
-            }
-        })
+    fun items(items: Array<CharSequence>, f: (which: Int) -> Unit) {
+        builder.setItems(items, { dialog, which -> f(which) })
     }
 
-    public fun adapter(adapter: ListAdapter, f: (which: Int) -> Unit) {
-        builder.setAdapter(adapter, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                f(which)
-            }
-        })
+    fun adapter(adapter: ListAdapter, f: (which: Int) -> Unit) {
+        builder.setAdapter(adapter, { dialog, which -> f(which) })
     }
 
-    public fun adapter(cursor: Cursor, labelColumn: String, f: (which: Int) -> Unit) {
-        builder.setCursor(cursor, object : OnClickListener {
-            override public fun onClick(dialog: DialogInterface, which: Int) {
-                f(which)
-            }
-        }, labelColumn)
+    fun adapter(cursor: Cursor, labelColumn: String, f: (which: Int) -> Unit) {
+        builder.setCursor(cursor, { dialog, which -> f(which) }, labelColumn)
     }
 
 }

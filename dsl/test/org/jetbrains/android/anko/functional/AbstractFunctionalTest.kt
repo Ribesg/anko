@@ -28,7 +28,7 @@ import org.junit.Assert.fail
 import java.io.File
 import java.io.FileWriter
 
-public abstract class AbstractFunctionalTest {
+abstract class AbstractFunctionalTest {
     protected fun loadOrCreate(file: File, data: String): String {
         try {
             return file.readText()
@@ -66,8 +66,8 @@ public abstract class AbstractFunctionalTest {
 
         val expected = loadOrCreate(expectedFile, actual).replace("\r", "").trimBlank()
 
-        assertTrue("Expected text is empty.", expected.length() > 0)
-        assertTrue("Actual text is empty.", actual.length() > 0)
+        assertTrue("Expected text is empty.", expected.length > 0)
+        assertTrue("Actual text is empty.", actual.length > 0)
         assertEquals(expected, actual)
     }
 

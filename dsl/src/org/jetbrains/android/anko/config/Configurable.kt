@@ -16,12 +16,11 @@
 
 package org.jetbrains.android.anko.config
 
-abstract class Configurable(val config: AnkoConfiguration)
+abstract class Configurable(val config: AnkoConfiguration) {
+    public val log: LogManager
+        get() = config.logManager
+}
 
 fun Configurable.generate(vararg option: ConfigurationOption, init: () -> String) : String {
     return if (option.any { config[it] }) init() else ""
-}
-
-fun <T> Configurable.generateList(vararg option: ConfigurationOption, init: () -> Collection<T>) : Collection<T> {
-    return if (option.any { config[it] }) init() else emptyList()
 }

@@ -29,11 +29,11 @@ import org.jetbrains.android.anko.generator.ListenerGenerator
 import org.jetbrains.android.anko.generator.SimpleListenerElement
 import org.jetbrains.android.anko.utils.*
 
-public class ListenerRenderer(config: AnkoConfiguration) : Renderer(config) {
+class ListenerRenderer(config: AnkoConfiguration) : Renderer(config) {
 
     override val renderIf: Array<ConfigurationOption> = arrayOf(AnkoFile.LISTENERS)
 
-    override fun processElements(state: GenerationState) = StringBuilder {
+    override fun processElements(state: GenerationState) = StringBuilder().apply {
         val renderedClasses = hashSetOf<String>()
 
         for (listener in state[ListenerGenerator::class.java]) {
@@ -101,7 +101,7 @@ public class ListenerRenderer(config: AnkoConfiguration) : Renderer(config) {
                     line("}").nl()
                 }
 
-                line("public fun ${method.name}(listener: ($argumentTypes) -> ${method.returnType.asString()}) {")
+                line("fun ${method.name}(listener: ($argumentTypes) -> ${method.returnType.asString()}) {")
                 line("_$varName = listener")
                 line("}")
             }.getLines()

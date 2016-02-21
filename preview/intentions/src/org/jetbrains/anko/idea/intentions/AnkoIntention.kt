@@ -3,168 +3,131 @@ package org.jetbrains.anko.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.intentions.JetSelfTargetingIntention
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
-import org.jetbrains.kotlin.resolve.lazy.descriptors.ClassResolutionScopesSupport
-import org.jetbrains.kotlin.resolve.scopes.*
-import org.jetbrains.kotlin.resolve.scopes.ExplicitImportsScope
-import org.jetbrains.kotlin.resolve.scopes.utils.asLexicalScope
-import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsFileScope
-import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
+import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.types.lowerIfFlexible
 
-abstract class AnkoIntention<TElement : JetElement>(
+abstract class AnkoIntention<TElement : KtElement>(
         elementType: Class<TElement>,
         text: String,
         familyName: String = text
-) : JetSelfTargetingIntention<TElement>(elementType, text, familyName) {
+) : SelfTargetingIntention<TElement>(elementType, text, familyName) {
+
+    final override fun isApplicableTo(element: TElement, caretOffset: Int): Boolean {
+        val file = element.containingFile as? KtFile ?: return false
+        val moduleDescriptor = file.findModuleDescriptor()
+        moduleDescriptor.resolveTopLevelClass(ANKO_INTERNALS_FQNAME, NoLookupLocation.FROM_IDE) ?: return false
+        return isApplicable(element, caretOffset)
+    }
+
+    abstract fun isApplicable(element: TElement, caretOffset: Int): Boolean
 
     private fun isTypeOf(descriptor: ClassifierDescriptor, vararg fqName: String): Boolean {
         val resolvedName = DescriptorUtils.getFqNameSafe(descriptor).asString()
         return fqName.any { it == resolvedName }
     }
 
-    protected fun JetCallExpression.isValueParameterTypeOf(parameterIndex: Int, resolvedCall: ResolvedCall<*>?, vararg fqName: String): Boolean {
+    protected fun KtCallExpression.isValueParameterTypeOf(
+            parameterIndex: Int,
+            resolvedCall: ResolvedCall<*>?,
+            vararg fqName: String
+    ): Boolean {
         val ctxArgumentDescriptor = (resolvedCall ?: getResolvedCall(analyze()))?.resultingDescriptor
                 ?.valueParameters?.get(parameterIndex)?.type?.lowerIfFlexible()
                 ?.constructor?.declarationDescriptor ?: return false
         return isTypeOf(ctxArgumentDescriptor, *fqName)
     }
 
-    protected fun JetCallExpression.isReceiverParameterTypeOf(resolvedCall: ResolvedCall<*>?, vararg fqName: String): Boolean {
+    protected fun KtCallExpression.isReceiverParameterTypeOf(
+            resolvedCall: ResolvedCall<*>?,
+            vararg fqName: String
+    ): Boolean {
         val receiverDescriptor = (resolvedCall ?: getResolvedCall(analyze()))?.resultingDescriptor
                 ?.dispatchReceiverParameter?.type?.lowerIfFlexible()
                 ?.constructor?.declarationDescriptor ?: return false
         return isTypeOf(receiverDescriptor, *fqName)
     }
 
-    protected val JetDotQualifiedExpression.receiver: JetExpression?
+    protected val KtDotQualifiedExpression.receiver: KtExpression?
         get() = receiverExpression
 
-    protected val JetDotQualifiedExpression.selector: JetExpression?
+    protected val KtDotQualifiedExpression.selector: KtExpression?
         get() = selectorExpression
 
-    protected val PsiElement.text: String
-        get() = getText()
-
-    protected val JetBinaryExpressionWithTypeRHS.operation: JetSimpleNameExpression
+    protected val KtBinaryExpressionWithTypeRHS.operation: KtSimpleNameExpression
         get() = operationReference
 
     protected inline fun <reified E : PsiElement> PsiElement?.require(name: String? = null, sub: E.() -> Boolean): Boolean {
         return require<E>(name) && (this as E).sub()
     }
 
+    inline fun require(cond: Boolean, sub: () -> Boolean): Boolean {
+        if (cond) sub()
+        return cond
+    }
+
     protected inline fun <reified E : PsiElement> PsiElement?.require(name: String? = null): Boolean {
         if (this !is E) return false
-        if (name != null && name != this.getText()) return false
+        if (name != null && name != this.text) return false
         return true
     }
 
-    protected inline fun PsiElement?.requireCall(functionName: String? = null, argCount: Int? = null, sub: JetCallExpression.() -> Boolean): Boolean {
-        return requireCall(functionName, argCount) && (this as JetCallExpression).sub()
+    protected inline fun PsiElement?.requireCall(
+            functionName: String? = null,
+            argCount: Int? = null,
+            sub: KtCallExpression.() -> Boolean
+    ): Boolean {
+        return requireCall(functionName, argCount) && (this as KtCallExpression).sub()
     }
 
-    suppress("NOTHING_TO_INLINE")
+    @Suppress("NOTHING_TO_INLINE")
     protected inline fun PsiElement?.requireCall(functionName: String? = null, argCount: Int? = null): Boolean {
-        if (this !is JetCallExpression) return false
-        if (functionName != null && functionName != calleeExpression?.getText()) return false
-        if (argCount != null && argCount != valueArguments.size()) return false
+        if (this !is KtCallExpression) return false
+        if (functionName != null && functionName != calleeExpression?.text) return false
+        if (argCount != null && argCount != valueArguments.size) return false
         return true
     }
 
-    private fun getResolutionScope(descriptor: DeclarationDescriptor): LexicalScope {
-        return when (descriptor) {
-            is PackageFragmentDescriptor -> {
-                val moduleDescriptor = descriptor.containingDeclaration
-                getResolutionScope(moduleDescriptor.getPackage(descriptor.fqName))
-            }
+    abstract fun replaceWith(element: TElement, psiFactory: KtPsiFactory): NewElement?
 
-            is PackageViewDescriptor ->
-                descriptor.memberScope.memberScopeAsFileScope()
+    final override fun applyTo(element: TElement, editor: Editor?) {
+        val project = editor?.project ?: return
+        val file = element.containingFile as? KtFile ?: return
+        val moduleDescriptor = file.findModuleDescriptor()
+        val resolutionFacade = file.getResolutionFacade()
 
-            is ClassDescriptorWithResolutionScopes ->
-                descriptor.scopeForMemberDeclarationResolution
+        val psiFactory = KtPsiFactory(project)
+        val (newElement, fqNamesToImport) = replaceWith(element, psiFactory) ?: return
 
-            is ClassDescriptor -> {
-                val outerScope = getResolutionScope(descriptor.containingDeclaration)
-                ClassResolutionScopesSupport(descriptor, LockBasedStorageManager.NO_LOCKS, { outerScope })
-                        .scopeForMemberDeclarationResolution()
-            }
+        val newExpression = newElement
 
-            is FunctionDescriptor ->
-                FunctionDescriptorUtil.getFunctionInnerScope(getResolutionScope(descriptor.containingDeclaration),
-                        descriptor, RedeclarationHandler.DO_NOTHING)
-
-            is PropertyDescriptor ->
-                JetScopeUtils.getPropertyDeclarationInnerScope(descriptor,
-                        getResolutionScope(descriptor.containingDeclaration),
-                        RedeclarationHandler.DO_NOTHING)
-            is LocalVariableDescriptor -> {
-                val declaration = DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as JetDeclaration
-                declaration.analyze()[BindingContext.RESOLUTION_SCOPE, declaration]!!.asLexicalScope()
-            }
-
-            else -> throw IllegalArgumentException("Cannot find resolution scope for $descriptor")
+        ImportInsertHelper.getInstance(project).apply {
+            fqNamesToImport
+                    .flatMap {
+                        val fqName = FqName(if ('.' in it) it else "$ANKO_PACKAGE$it")
+                        resolutionFacade.resolveImportReference(moduleDescriptor, fqName)
+                    }
+                    .forEach { if (it.importableFqName != null) importDescriptor(file, it) }
         }
-    }
-    abstract fun replaceWith(element: TElement, psiFactory: JetPsiFactory): NewElement?
-
-    final override fun applyTo(element: TElement, editor: Editor) {
-        val project = editor.project ?: return
-
-        val resolutionFacade = element.getResolutionFacade()
-        val containingJetDeclaration = JetStubbedPsiUtil.getContainingDeclaration(element) ?: return
-        val containingDeclaration = resolutionFacade.resolveToDescriptor(containingJetDeclaration)
-                as? CallableDescriptor ?: return
-        val jetFile = element.getContainingJetFile()
-
-
-        val psiFactory = JetPsiFactory(project)
-        val newElement = replaceWith(element, psiFactory) ?: return
-        val newExpression = newElement.element
-
-        val explicitlyImportedSymbols = newElement.newFqNames.flatMap { fqName ->
-            resolutionFacade.resolveImportReference(jetFile.findModuleDescriptor(), FqName("$ANKO_PACKAGE$fqName"))
-        }
-        val symbolScope = getResolutionScope(containingDeclaration)
-        val scope = LexicalChainedScope(symbolScope, containingDeclaration,
-                false, null, "ReplaceWith resolution scope", ExplicitImportsScope(explicitlyImportedSymbols))
-        var bindingContext = analyzeInContext(newExpression, containingDeclaration, scope, resolutionFacade)
-        val functionDescriptor = newExpression.getResolvedCall(bindingContext)?.resultingDescriptor ?: return
-        ImportInsertHelper.getInstance(project).importDescriptor(element.getContainingJetFile(), functionDescriptor)
 
         element.replace(newExpression)
     }
 
-    private fun analyzeInContext(
-            expression: JetExpression,
-            symbolDescriptor: CallableDescriptor,
-            scope: LexicalScope,
-            resolutionFacade: ResolutionFacade
-    ): BindingContext {
-        val traceContext = BindingTraceContext()
-        resolutionFacade.getFrontendService(symbolDescriptor.module, ExpressionTypingServices::class.java)
-                .getTypeInfo(scope, expression, TypeUtils.NO_EXPECTED_TYPE, DataFlowInfo.EMPTY, traceContext, false)
-        return traceContext.bindingContext
-    }
-
     private companion object {
         private val ANKO_PACKAGE = "org.jetbrains.anko."
+        private val ANKO_INTERNALS_FQNAME = FqName("org.jetbrains.anko.internals.AnkoInternals")
     }
 }
 
@@ -174,6 +137,7 @@ object FqNames {
     val VIEW_FQNAME = "android.view.View"
 }
 
-class NewElement(val element: JetExpression, vararg newFqNames: String) {
-    val newFqNames = newFqNames.toList()
+class NewElement(val element: KtExpression, vararg val newNames: String) {
+    operator fun component1() = element
+    operator fun component2() = newNames //fqName or name in anko package
 }

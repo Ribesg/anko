@@ -1,3 +1,7 @@
+![GitHub version](https://badge.fury.io/gh/Kotlin%2Fanko.svg)
+[![TeamCity (simple build status)](https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/ProjectsWrittenInKotlin_Anko.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=ProjectsWrittenInKotlin_Anko&tab=buildTypeStatusDiv)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
+
 Anko
 ===========
 
@@ -23,7 +27,6 @@ As you might have guessed, it's a DSL for Android. It is written in [Kotlin](htt
 
 * [Why Anko?](#why-anko)
 	* [Why DSL?](#why-dsl)
-	* [Why not Scaloid?](#why-not-scaloid)
 	* [Supporting existing code](#supporting-existing-code)
 	* [How it works](#how-it-works)
 	* [Is it extensible?](#is-it-extensible)
@@ -69,12 +72,12 @@ While you can create UI programmatically, it's hardly done because it's somewhat
 ```kotlin
 val act = this
 val layout = LinearLayout(act)
-layout.setOrientation(LinearLayout.VERTICAL)
+layout.orientation = LinearLayout.VERTICAL
 val name = EditText(act)
 val button = Button(act)
-button.setText("Say Hello")
+button.text = "Say Hello"
 button.setOnClickListener {
-    Toast.makeText(act, "Hello, ${name.getText()}!", Toast.LENGTH_SHORT).show()  
+    Toast.makeText(act, "Hello, ${name.text}!", Toast.LENGTH_SHORT).show()
 }
 layout.addView(name)
 layout.addView(button)
@@ -91,11 +94,6 @@ verticalLayout {
 }
 ```
 
-### Why not Scaloid?
-
-[Scaloid](https://github.com/pocorall/scaloid) is a similar library for Scala, with lots of cool features targeted at Scala developers. Anko on the other hand is primarily targeted at Java and Kotlin developers.
-
-
 ### Supporting existing code
 
 You don't have to rewrite all your UI with Anko. You can keep your old classes written in Java.
@@ -107,6 +105,8 @@ val name = find<TextView>(R.id.name)
 name.hint = "Enter your name"
 name.onClick { /*do something*/ }
 ```
+
+You can make your code even more compact by using [Kotlin Android Extensions](https://kotlinlang.org/docs/tutorials/android-plugin.html).
 
 ### How it works
 
@@ -121,9 +121,7 @@ Short answer: **yes**.
 For example, you might want to use a `MapView` in the DSL. Then just write this in any Kotlin file from where you could import it:
 ```kotlin
 public inline fun ViewManager.mapView() = mapView {}
-public inline fun ViewManager.mapView(init: MapView.() -> Unit): MapView {
-    return ankoView({ MapView(it) }, init)
-}
+public inline fun ViewManager.mapView(init: MapView.() -> Unit) = ankoView({ MapView(it) }, init)
 ```
 
 ``{ MapView(it) }`` is a factory function for your custom `View`. It accepts a `Context` instance.
@@ -132,7 +130,7 @@ So now you can write this:
 
 ```kotlin
 frameLayout {
-    val mapView = mapView().layoutParams(width = matchParent)
+    val mapView = mapView().lparams(width = matchParent)
 }
 ```
 
@@ -146,14 +144,15 @@ Basically, all you have to do is to add an additional repository and a compile d
 
 ```gradle
 dependencies {
-    compile 'org.jetbrains.anko:anko-sdk15:0.7' // sdk19, sdk21, sdk23 are also available
-    compile 'org.jetbrains.anko:anko-support-v4:0.7' // In case you need support.v4 bindings
+    compile 'org.jetbrains.anko:anko-sdk15:0.8' // sdk19, sdk21, sdk23 are also available
+    compile 'org.jetbrains.anko:anko-support-v4:0.8' // In case you need support-v4 bindings
+    compile 'org.jetbrains.anko:anko-appcompat-v7:0.8' // For appcompat-v7 bindings
 }
 ```
 
 ### Using as Jar library
 
-If your project is not based on Gradle, you don't have to jump around with Maven artifacts. Just attach jars from the [releases page](https://github.com/JetBrains/anko/releases) as project library dependencies and that's it.
+If your project is not based on Gradle, just attach jars from the [releases page](https://github.com/JetBrains/anko/releases) or from the [jcenter repository](https://jcenter.bintray.com/org/jetbrains/anko/) as project library dependencies and that's it.
 
 ### Building Anko
 
@@ -175,7 +174,7 @@ DSL is available in `onCreate()`:
 
 ```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
-    super<Activity>.onCreate(savedInstanceState)
+    super.onCreate(savedInstanceState)
     
     verticalLayout {
         padding = dip(30)
@@ -202,7 +201,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 </tr>
 </table>
 
-`padding`, `hint` and `textSize` are [extension properties](http://kotlinlang.org/docs/reference/extensions.html#extension-properties). They exist for most `View` properties allowing
+`hint` and `textSize` are [synthetic extension properties](https://kotlinlang.org/docs/reference/java-interop.html#getters-and-setters) bound to JavaBean-style getters and setters, `padding` is an [extension property](http://kotlinlang.org/docs/reference/extensions.html#extension-properties) from Anko. Either of these exists for most `View` properties allowing
 you to write `text = "Some text"` instead of `setText("Some text")`.
 
 `verticalLayout` (a `LinearLayout` but already with a `LinearLayout.VERTICAL` orientation), `editText` and `button` are
@@ -212,18 +211,40 @@ framework, and they work in `Activities`, `Fragments` (both default and that fro
 If you have a `Context` instance, you can write DSL constructs like this:
 
 ```kotlin
-val name = with(myContext) {
+val name: EditText = with(myContext) {
     editText {
         hint = "Name"
     }
 }
 ```
 
-Variable `name` has type `EditText`.
+### AnkoComponent
+
+Although you can use the DSL directly (in `onCreate()` or everywhere else), without creating any extra classes, it is often convenient to have UI in the separate class. If you use the provided `AnkoComponent` interface, you also you get a DSL [layout preview](doc/PREVIEW.md) feature for free.
+
+```kotlin
+class MyActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
+        MyActivityUI().setContentView(this)
+    }
+}
+
+class MyActivityUI : AnkoComponent {
+    override fun createView(ui: AnkoContext) = with(ui) {
+        verticalLayout {
+            val name = editText()
+            button("Say Hello") {
+                onClick { ctx.toast("Hello, ${name.text}!") }
+            }
+        }
+    }
+}
+```
 
 ### Helper methods
 
-As you probably noticed, the `button` function in the previous section accepts a `String` parameter. Such helper methods exist for some views such
+As you probably noticed earlier, the `button()` function in the previous section accepts a `String` parameter. Such helper methods exist for some views such
 as `TextView`, `EditText`, `Button` or `ImageView`.
 
 If you don't need to set any properties for some particular `View`, you can omit `{}` and write `button("Ok")` or even just `button()`:
@@ -243,25 +264,25 @@ Positioning of widgets inside parent containers can be tuned using `LayoutParams
 <ImageView 
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android_layout_marginLeft="5dip"
-    android_layout_marginTop="10dip"
+    android:layout_marginLeft="5dip"
+    android:layout_marginTop="10dip"
     android:src="@drawable/something" />
 ```
 
-In Anko, you specify `LayoutParams` right after a `View` description:
+In Anko, you specify `LayoutParams` right after a `View` description using `lparams()`:
 
 ```kotlin
 linearLayout {
     button("Login") {
         textSize = 26f
-    }.layoutParams(width = wrapContent) {
+    }.lparams(width = wrapContent) {
         horizontalMargin = dip(5)
         topMargin = dip(10)
     }
 }
 ```
 
-If you specify `layoutParams`, but omit `width` and/or `height`, their default values are both `WRAP_CONTENT`. But you always can pass them explicitly: use [named arguments](http://kotlinlang.org/docs/reference/functions.html#named-arguments).
+If you specify `lparams()`, but omit `width` and/or `height`, their default values are both `WRAP_CONTENT`. But you always can pass them explicitly: use [named arguments](http://kotlinlang.org/docs/reference/functions.html#named-arguments).
 
 Some convenient helper properties to notice:
 
@@ -269,7 +290,7 @@ Some convenient helper properties to notice:
 - `verticalMargin` set top and bottom ones, and 
 - `margin` sets all four margins simultaneously.
 
-Note that `layoutParams` are different for different layouts, for example, in the case of `RelativeLayout`:
+Note that `lparams()` are different for different layouts, for example, in the case of `RelativeLayout`:
 
 ```kotlin
 val ID_OK = 1
@@ -277,9 +298,9 @@ val ID_OK = 1
 relativeLayout {
     button("Ok") {
         id = ID_OK
-    }.layoutParams { alignParentTop() }
+    }.lparams { alignParentTop() }
   
-    button("Cancel").layoutParams { below(ID_OK) }
+    button("Cancel").lparams { below(ID_OK) }
 }
 ```
 
@@ -333,7 +354,7 @@ seekBar {
 }
 ```
 
-If you set `onProgressChanged` and `onStartTrackingTouch` for the same `View`, these two "partially defined" listeners will be merged. For the same listener method, last wins.
+If you set `onProgressChanged()` and `onStartTrackingTouch()` for the same `View`, these two "partially defined" listeners will be merged. For the same listener method, last wins.
 
 ### Resources, Colors and Dimensions
 
@@ -393,15 +414,15 @@ See [Extending Anko](doc/ADVANCED.md#extending-anko) for more information.
 
 ### Include tag
 
-It is easy to insert an XML layout into DSL. Use the `include` tag:
+It is easy to insert an XML layout into DSL. Use the `include()` function:
 
 ```kotlin
 include<View>(R.layout.something) {
     backgroundColor = Color.RED
-}.layoutParams(width = matchParent) { margin = dip(12) }
+}.lparams(width = matchParent) { margin = dip(12) }
 ```
 
-You can use `layoutParams` as usual, and if you provide a specific type instead of `View`, you can also use this type inside `{}`:
+You can use `lparams()` as usual, and if you provide a specific type instead of `View`, you can also use this type inside `{}`:
 
 ```kotlin
 include<TextView>(R.layout.textfield) {
@@ -411,7 +432,7 @@ include<TextView>(R.layout.textfield) {
 
 ### Styles
 
-Anko supports styling: `style` is simply a function that accepts `View`, is applied for the `View` itself, and then recursively to each child of a `View` if it is a `ViewGroup`:
+Anko supports styling: `style()` is simply a function that accepts `View`, is applied for the `View` itself, and then recursively to each child of a `View` if it is a `ViewGroup`:
 
 ```kotlin
 verticalLayout {

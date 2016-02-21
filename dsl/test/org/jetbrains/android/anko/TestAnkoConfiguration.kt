@@ -20,8 +20,10 @@ import org.jetbrains.android.anko.config.AnkoFile
 import org.jetbrains.android.anko.config.DefaultAnkoConfiguration
 import java.io.File
 
-public open class TestAnkoConfiguration(version: String) : DefaultAnkoConfiguration(File("workdir/temp"), version) {
-    public val tmpFiles: Map<AnkoFile, File> =
+open class TestAnkoConfiguration(
+        version: String
+) : DefaultAnkoConfiguration(File("workdir/temp"), version, setOf()) {
+    val tmpFiles: Map<AnkoFile, File> =
         AnkoFile.values().map { it to createTempTestFile(it.filename, ".kt") }.toMap()
 
     override var generateMavenArtifact = false

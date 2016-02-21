@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("CustomServicesKt")
 package org.jetbrains.anko
 
 import android.content.Context
-import org.jetbrains.anko.internals.NoBinding
+import org.jetbrains.anko.internals.AnkoInternals.NoBinding
 
 @NoBinding
-public val Context.vibrator: android.os.Vibrator
+val Context.vibrator: android.os.Vibrator
     get() = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
 
 @NoBinding
-public val Context.layoutInflater: android.view.LayoutInflater
+val Context.layoutInflater: android.view.LayoutInflater
     get() = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as android.view.LayoutInflater

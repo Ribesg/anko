@@ -23,10 +23,9 @@ import java.io.File
 import java.io.StringReader
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.dom.childElements
+import kotlinx.dom.childElements
 
 private class Widget(val name: String, val attrs: List<KeyValuePair>, val layoutParams: String, val children: List<Widget>) {
-
     override fun toString(): String {
         fun KeyValuePair.render() = if (value.isNotEmpty()) "$key = $value" else key
 
@@ -42,11 +41,10 @@ private class Widget(val name: String, val attrs: List<KeyValuePair>, val layout
     }
 }
 
-private class XmlReference(val packageName: String, val type: String, val value: String)
+class XmlReference(val packageName: String, val type: String, val value: String)
 
-public object XmlConverter {
-
-    public fun convert(xml: String, options: Set<String> = setOf()): String {
+object XmlConverter {
+    fun convert(xml: String, options: Set<String> = setOf()): String {
         val layout = xml.parseXml()
         val root = layout.documentElement
         val ids = TreeSet<String>()
@@ -71,7 +69,7 @@ public object XmlConverter {
         } else ""
 
         return imports.map { "import $it" }.joinToString("\n", postfix = "\n\n") +
-                "public class SomeActivity : Activity() {\n" +
+                "class SomeActivity : Activity() {\n" +
                 "    override fun onCreate(savedInstanceState: Bundle?) {\n" +
                 "        super<Activity>.onCreate(savedInstanceState)\n\n" +
                 widget.toString().indent(2) +
@@ -115,15 +113,15 @@ public object XmlConverter {
 
 }
 
-public fun main(args: Array<String>) {
-    if (args.size() < 2) {
+fun main(args: Array<String>) {
+    if (args.size < 2) {
         println("Usage: <xml file> <kt file>")
         return
     }
 
     val xmlFile = File(args[0])
     val ktFile = File(args[1])
-    val options = if (args.size() > 2) args[2].split(',').toSet() else setOf()
+    val options = if (args.size > 2) args[2].split(',').toSet() else setOf()
 
     if (!xmlFile.exists()) {
         println("$xmlFile does not exist. Aborting")
@@ -135,7 +133,7 @@ public fun main(args: Array<String>) {
     println(kt)
 }
 
-fun String.parseXml(): Document {
+private fun String.parseXml(): Document {
     val factory = DocumentBuilderFactory.newInstance()
     val builder = factory.newDocumentBuilder()
     val inputSource = InputSource(StringReader(this))

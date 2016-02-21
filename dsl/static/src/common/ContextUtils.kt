@@ -14,55 +14,62 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("ContextUtilsKt")
 package org.jetbrains.anko
 
 import android.app.Activity
 import android.app.Fragment
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.AssetManager
+import android.content.res.Resources
 import android.os.Bundle
 import android.os.Parcelable
 import android.preference.PreferenceManager
 import android.view.View
-import org.jetbrains.anko.internals.NoBinding
+import org.jetbrains.anko.internals.AnkoInternals.NoBinding
 import java.io.Serializable
 
-public val Context.defaultSharedPreferences: SharedPreferences
+val AnkoContext<*>.resources: Resources
+    get() = ctx.resources
+
+val AnkoContext<*>.assets: AssetManager
+    get() = ctx.assets
+
+val AnkoContext<*>.defaultSharedPreferences: SharedPreferences
+    get() = PreferenceManager.getDefaultSharedPreferences(ctx)
+
+val Context.defaultSharedPreferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(this)
 
-public val Fragment.defaultSharedPreferences: SharedPreferences
+val Fragment.defaultSharedPreferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(activity)
 
-public val Fragment.act: Activity
+val Fragment.act: Activity
     get() = activity
 
-public val Fragment.ctx: Context
+val Fragment.ctx: Context
     get() = activity
 
-public val Context.ctx: Context
+val Context.ctx: Context
     get() = this
 
-public val Activity.act: Activity
+val Activity.act: Activity
     get() = this
 
-//type casting is now under the hood
-@Suppress("UNCHECKED_CAST")
-public fun <T : View> View.find(id: Int): T = findViewById(id) as T
+inline fun <reified T : View> View.find(id: Int): T = findViewById(id) as T
+inline fun <reified T : View> Activity.find(id: Int): T = findViewById(id) as T
+inline fun <reified T : View> Fragment.find(id: Int): T = view?.findViewById(id) as T
 
-@Suppress("UNCHECKED_CAST")
-public fun <T : View> Activity.find(id: Int): T = findViewById(id) as T
+inline fun <reified T : View> View.findOptional(id: Int): T? = findViewById(id) as? T
+inline fun <reified T : View> Activity.findOptional(id: Int): T? = findViewById(id) as? T
+inline fun <reified T : View> Fragment.findOptional(id: Int): T? = view?.findViewById(id) as? T
 
-@Suppress("UNCHECKED_CAST")
-public fun <T : View> Fragment.find(id: Int): T = view?.findViewById(id) as T
-
-public fun <T: Fragment> T.withArguments(vararg params: Pair<String, Any>): T {
+fun <T: Fragment> T.withArguments(vararg params: Pair<String, Any>): T {
     arguments = bundleOf(*params)
     return this
 }
 
-public fun bundleOf(vararg params: Pair<String, Any>): Bundle {
+fun bundleOf(vararg params: Pair<String, Any>): Bundle {
     val b = Bundle()
     for (p in params) {
         val (k, v) = p
@@ -86,10 +93,16 @@ public fun bundleOf(vararg params: Pair<String, Any>): Bundle {
             is FloatArray -> b.putFloatArray(k, v)
             is IntArray -> b.putIntArray(k, v)
             is LongArray -> b.putLongArray(k, v)
-            is Array<Parcelable> -> b.putParcelableArray(k, v)
+            is Array<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                when {
+                    v.isArrayOf<Parcelable>() -> b.putParcelableArray(k, v as Array<out Parcelable>)
+                    v.isArrayOf<CharSequence>() -> b.putCharSequenceArray(k, v as Array<out CharSequence>)
+                    v.isArrayOf<String>() -> b.putStringArray(k, v as Array<out String>)
+                    else -> throw AnkoException("Unsupported bundle component (${v.javaClass})")
+                }
+            }
             is ShortArray -> b.putShortArray(k, v)
-            is Array<CharSequence> -> b.putCharSequenceArray(k, v)
-            is Array<String> -> b.putStringArray(k, v)
             is Bundle -> b.putBundle(k, v)
             else -> throw AnkoException("Unsupported bundle component (${v.javaClass})")
         }
@@ -98,17 +111,23 @@ public fun bundleOf(vararg params: Pair<String, Any>): Bundle {
     return b
 }
 
-public NoBinding val Context.displayMetrics: android.util.DisplayMetrics
+@NoBinding val Context.displayMetrics: android.util.DisplayMetrics
     get() = resources.displayMetrics
 
-public NoBinding val Context.configuration: android.content.res.Configuration
+@NoBinding val Context.configuration: android.content.res.Configuration
     get() = resources.configuration
 
-public val android.content.res.Configuration.portrait: Boolean
+@NoBinding val AnkoContext<*>.displayMetrics: android.util.DisplayMetrics
+    get() = ctx.resources.displayMetrics
+
+@NoBinding val AnkoContext<*>.configuration: android.content.res.Configuration
+    get() = ctx.resources.configuration
+
+val android.content.res.Configuration.portrait: Boolean
     get() = orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
 
-public val android.content.res.Configuration.landscape: Boolean
+val android.content.res.Configuration.landscape: Boolean
     get() = orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
-public val android.content.res.Configuration.long: Boolean
+val android.content.res.Configuration.long: Boolean
     get() = (screenLayout and android.content.res.Configuration.SCREENLAYOUT_LONG_YES) != 0

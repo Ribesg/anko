@@ -23,10 +23,9 @@ import org.junit.Assert.assertTrue
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import java.util.*
 import java.util.logging.Logger
 
-public open class CompileTestFixture {
+open class CompileTestFixture {
     class ProcResult(val stdout: String, val stderr: String, val exitCode: Int)
 
     companion object {
@@ -90,8 +89,8 @@ public open class CompileTestFixture {
         val lib = File("lib/")
         val robolectricDir = File(lib, "robolectric/")
 
-        val robolectricJars = robolectricDir.listFiles { it.extension == "jar" }?.toList() ?: listOf()
-        val androidAllJars = File(lib, "androidall").listFiles { it.extension == "jar" }?.toList() ?: listOf()
+        val robolectricJars = robolectricDir.listFiles { file -> file.extension == "jar" }?.toList() ?: listOf()
+        val androidAllJars = File(lib, "androidall").listFiles { file -> file.extension == "jar" }?.toList() ?: listOf()
 
         val compiledJarFile = compile(testDataFile, artifactOriginalDir, robolectricJars)
 
@@ -101,7 +100,7 @@ public open class CompileTestFixture {
                 File(lib, "hamcrest-all-1.3.jar")
         ) + getAnkoJars(artifactOriginalDir) + robolectricJars + androidAllJars)
                 .map { it.absolutePath }
-                .join(File.pathSeparator)
+                .joinToString(File.pathSeparator)
 
         val manifest = File("dsl/testData/robolectric/AndroidManifest.xml")
         val androidRes = File("dsl/testData/robolectric/res/")

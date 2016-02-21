@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.anko.utils
 
-public interface ReflectionUtils {
+internal interface ReflectionUtils {
 
     fun <T> initializeClass(clazz: Class<out T>): T {
         try {
@@ -27,7 +27,7 @@ public interface ReflectionUtils {
         }
     }
 
-    fun <T> initializeClass(clazz: Class<out T>, vararg args: Pair<Any, Class<*>>): T {
+    fun <T> initializeClassWithArgs(clazz: Class<out T>, vararg args: Pair<Any, Class<*>>): T {
         // https://youtrack.jetbrains.com/issue/KT-5793
         val argList = args.map { it.first }.toTypedArray()
         val argTypes = args.map { it.second }.toTypedArray()

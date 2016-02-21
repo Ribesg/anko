@@ -1,7 +1,7 @@
 Anko Preview Plugin
 ===================
 
-Anko Preview plugin is available for IntelliJ IDEA and Android Studio. It allows you to preview `Activity` and `Fragment` classes written with Anko directly in the IDE tool window.
+Anko Preview plugin is available for IntelliJ IDEA and Android Studio. It allows you to preview `AnkoComponent` classes written with Anko directly in the IDE tool window.
 
 ## Using Anko Preview Plugin
 
@@ -11,34 +11,31 @@ You can download Anko Preview plugin [here](https://plugins.jetbrains.com/update
 
 ### Preview
 
-Suppose you have this class written with Anko:
+Suppose you have these classes written with Anko:
 
 ```kotlin
-public class MyActivity : Activity() {
+class MyActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
+        MyActivityUI().setContentView(this)
+    }
+}
 
-	override fun onCreate(savedInstanceState: Bundle?) {
-		verticalLayout {
-			val name = editText()
-			button("Say Hello") {
-				onClick { toast("Hello, ${name.text}!") }
-			}
-		}
-	}
-
+class MyActivityUI : AnkoComponent<MyActivity> {
+    override fun createView(ui: AnkoContext<MyActivity>) = ui.apply {
+        verticalLayout {
+            val name = editText()
+            button("Say Hello") {
+                onClick { ctx.toast("Hello, ${name.text}!") }
+            }
+        }
+    }.view
 }
 ```
 
-Put the cursor somewhere inside the `MyActivity` declaration, open the *DSL Preview* tool window ("View" → "Tool Windows" → "DSL Preview") and press *Refresh*.
+Put the cursor somewhere inside the `MyActivityUI` declaration, open the *Anko DSL Preview* tool window ("View" → "Tool Windows" → "Anko DSL Preview") and press *Refresh*.
 
-Module make is required, so it could take some time before the image will be actually shown.
-
-<table>
-<tr><td width="50px" align="center">:penguin:</td>
-<td>
-<i>Some dependencies (around 30 MB) are loaded during the first refresh.</i>
-</td>
-</tr>
-</table>
+Running make is required, so it could take some time before the image will be actually shown.
 
 ## XML to DSL Converter
 

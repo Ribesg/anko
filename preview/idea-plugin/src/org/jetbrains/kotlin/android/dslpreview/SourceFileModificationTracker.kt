@@ -20,10 +20,10 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
-import org.jetbrains.kotlin.psi.JetFile
+import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicLong
 
-public class SourceFileModificationTracker : PsiTreeChangePreprocessor, ModificationTracker {
+class SourceFileModificationTracker : PsiTreeChangePreprocessor, ModificationTracker {
 
     private val counter = AtomicLong()
 
@@ -39,7 +39,7 @@ public class SourceFileModificationTracker : PsiTreeChangePreprocessor, Modifica
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (event.code in HANDLED_EVENTS) {
             val file = event.file
-            if (file is JetFile || file is PsiJavaFile) counter.incrementAndGet()
+            if (file is KtFile || file is PsiJavaFile) counter.incrementAndGet()
         }
     }
 

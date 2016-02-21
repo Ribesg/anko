@@ -30,7 +30,7 @@ class PropertyRenderer(config: AnkoConfiguration) : Renderer(config) {
 
     override val renderIf: Array<ConfigurationOption> = arrayOf(AnkoFile.PROPERTIES)
 
-    override fun processElements(state: GenerationState) = StringBuilder {
+    override fun processElements(state: GenerationState) = StringBuilder().apply {
         state[PropertyGenerator::class.java].forEach {
             append(renderProperty(it))
         }
@@ -61,7 +61,7 @@ class PropertyRenderer(config: AnkoConfiguration) : Renderer(config) {
 
         val nullability = if (nullable) "?" else ""
 
-        val otherSetters = if (property.setters.size() > 1) property.setters.drop(1) else listOf()
+        val otherSetters = if (property.setters.size > 1) property.setters.drop(1) else listOf()
 
         if (property.getter != null) {
             return buffer {
@@ -70,7 +70,7 @@ class PropertyRenderer(config: AnkoConfiguration) : Renderer(config) {
         }
 
         return buffer {
-            line("public $mutability $fullPropertyName: $rawReturnType$nullability")
+            line("$mutability $fullPropertyName: $rawReturnType$nullability")
             if (getter != null) {
                 indent.line("get() = ${getter.method.name}()")
             } else {
@@ -88,11 +88,11 @@ class PropertyRenderer(config: AnkoConfiguration) : Renderer(config) {
     {
         if (otherSetters.isNotEmpty() && supportsResourceSetter(returnType)) {
             val resourceSetter = otherSetters.firstOrNull {
-                it.method.args.size() == 1 && (it.method.args[0].className == "int")
+                it.method.args.size == 1 && (it.method.args[0].className == "int")
             }
 
             if (resourceSetter != null) {
-                line("public var ${fullPropertyName}Resource: Int")
+                line("var ${fullPropertyName}Resource: Int")
                 indent.line("get() = throw AnkoException(\"'${fullPropertyName}Resource' property does not have a getter\")")
                 indent.line("set(v) = ${resourceSetter.method.name}(v)")
                 nl()

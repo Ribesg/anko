@@ -36,9 +36,9 @@ public open class TestActivity() : Activity() {
 @RunWith(RobolectricTestRunner::class)
 public class RobolectricTest() {
 
-    Test
+    @Test
     public fun test() {
-        val activity = Robolectric.buildActivity(javaClass<TestActivity>()).create().get()
+        val activity = Robolectric.buildActivity(TestActivity::class.java).create().get()
         val textView = activity.findViewById(1) as TextView
         val button = activity.findViewById(2) as Button
 

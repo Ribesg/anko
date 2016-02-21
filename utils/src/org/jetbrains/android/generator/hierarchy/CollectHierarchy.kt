@@ -24,15 +24,15 @@ import org.jetbrains.android.anko.utils.isInner
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
-public fun main(args: Array<String>): Unit = HierarchyCollector.collect()
+fun main(args: Array<String>): Unit = HierarchyCollector.collect()
 
 object HierarchyCollector {
 
-    @jvmStatic
-    public fun collect() {
-        val ver = File("workdir/original").listFiles { it.name.matches("[0-9]+".toRegex()) }!!
-                .first { it.listFiles { it.name == "android.jar" }?.isNotEmpty() ?: false }
-        val androidJar = ver.listFiles { it.name == "android.jar" }!!.first()
+    @JvmStatic
+    fun collect() {
+        val ver = File("workdir/original").listFiles { file -> file.name.matches("[0-9]+".toRegex()) }!!
+                .first { it.listFiles { file -> file.name == "android.jar" }?.isNotEmpty() ?: false }
+        val androidJar = ver.listFiles { file -> file.name == "android.jar" }!!.first()
 
         val classTree = ClassProcessor(listOf(androidJar), listOf()).genClassTree()
         val viewClasses = classTree.filter { it.isView(classTree) && !it.isInner && it.name.startsWith("android/widget/") }

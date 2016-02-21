@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.android.attrs.Attr
 import org.jetbrains.kotlin.android.attrs.NoAttr
 import java.util.regex.Pattern
 
-private fun renderLayoutAttributes(attributes: List<KeyValuePair>, parentName: String): String {
+internal fun renderLayoutAttributes(attributes: List<KeyValuePair>, parentName: String): String {
     val map = attributes.map { it.key.replace("android:layout_", "") to it.value }.toMap()
 
     fun renderLayoutDimension(s: String) = when {
@@ -33,29 +33,30 @@ private fun renderLayoutAttributes(attributes: List<KeyValuePair>, parentName: S
         else -> s
     }
 
-    val width = renderLayoutDimension(map.get("width") ?: "wrap_content")
-    val height = renderLayoutDimension(map.get("height") ?: "wrap_content")
+    val width = renderLayoutDimension(map["width"] ?: "wrap_content")
+    val height = renderLayoutDimension(map["height"] ?: "wrap_content")
 
     val options = (layoutAttributeRenderers.findFirst { it(parentName, map) } ?: listOf()).filterNotNull()
     val optionsString = if (options.isNotEmpty()) {
         options.map { it.toString().indent(1) }.joinToString("\n", " {\n", "\n}")
     } else ""
 
-    return ".layoutParams(width = $width, height = $height)$optionsString"
+    return ".lparams(width = $width, height = $height)$optionsString"
 }
 
-private fun transformAttribute(widgetName: String?, name: String, value: String): KeyValuePair? {
+internal fun transformAttribute(widgetName: String, name: String, value: String): KeyValuePair? {
     return when {
         name.startsWith("xmlns:") -> null
+        name.startsWith("tools:") -> null
         name == "style" -> null
         name.startsWith("android:") -> {
-            val shortName = name.substring("android:".length())
+            val shortName = name.substring("android:".length)
             // Search for attribute in `widgetName` styleable, then in superclass styleables,
             // then in `View` styleable, then in free attributes
             val attr = attrs.free.firstOrNull { it.name == shortName } ?:
-                attrs.styleables.get(widgetName)?.attrs?.firstOrNull { it.name == shortName } ?:
-                viewHierarchy[widgetName]?.findFirst { attrs.styleables.get(it)?.attrs?.firstOrNull { it.name == shortName } }
-                attrs.styleables.get("View")?.attrs?.firstOrNull { it.name == shortName }
+                attrs.styleables[widgetName]?.attrs?.firstOrNull { it.name == shortName } ?:
+                viewHierarchy[widgetName]?.findFirst { attrs.styleables[it]?.attrs?.firstOrNull { it.name == shortName } }
+                attrs.styleables["View"]?.attrs?.firstOrNull { it.name == shortName }
 
             return if (attr != null) {
                 renderAttribute(attr, shortName, value)
@@ -65,7 +66,7 @@ private fun transformAttribute(widgetName: String?, name: String, value: String)
     }
 }
 
-private fun renderAttribute(attr: Attr, p: KeyValuePair) = renderAttribute(attr, p.key, p.value)
+internal fun renderAttribute(attr: Attr, p: KeyValuePair) = renderAttribute(attr, p.key, p.value)
 
 private fun renderAttribute(attr: Attr, key: String, value: String): KeyValuePair? {
     for (renderer in viewAttributeRenderers) {
@@ -76,7 +77,7 @@ private fun renderAttribute(attr: Attr, key: String, value: String): KeyValuePai
     return null
 }
 
-private fun String.parseReference(): XmlReference {
+fun String.parseReference(): XmlReference {
     val matcher = Pattern.compile("@((([A-Za-z0-9._]+)\\:)?)([+A-Za-z0-9_]+)\\/([A-Za-z0-9_]+)").matcher(this)
     if (!matcher.matches()) {
         throw RuntimeException("Invalid reference: $this")
@@ -84,29 +85,29 @@ private fun String.parseReference(): XmlReference {
     return XmlReference(matcher.group(3) ?: "", matcher.group(4), matcher.group(5))
 }
 
-private fun String.parseFlagValue(): Int {
+fun String.parseFlagValue(): Int {
     return if (startsWith("0x")) Integer.parseInt(this.substring(2), 16) else this.toInt()
 }
 
-private fun String.isReference(): Boolean {
+fun String.isReference(): Boolean {
     return startsWith("@")
 }
 
-private fun String.isSpecialReferenceAttribute() = when (this) {
+fun String.isSpecialReferenceAttribute() = when (this) {
     "text" -> true
     "background" -> true
     else -> false
 }
 
-private fun String.isDimension(): Boolean {
+fun String.isDimension(): Boolean {
     return endsWith("sp") || endsWith("dp") || endsWith("px") || endsWith("dip")
 }
 
-private fun String.isColor(): Boolean {
+fun String.isColor(): Boolean {
     return toLowerCase().matches("#[0-9a-f]+".toRegex())
 }
 
-private fun String.parseDimension(): Pair<String, String> {
+fun String.parseDimension(): Pair<String, String> {
     val matcher = Pattern.compile("([0-9\\.]+)(dip|dp|px|sp)").matcher(this)
     if (!matcher.matches()) {
         throw RuntimeException("Invalid dimension: $this")

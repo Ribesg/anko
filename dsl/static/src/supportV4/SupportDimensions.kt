@@ -15,23 +15,21 @@
  */
 
 @file:Suppress("NOTHING_TO_INLINE")
-@file:JvmMultifileClass
-@file:JvmName("SupportDimensionsKt")
 package org.jetbrains.anko.support.v4
 
 import android.support.v4.app.Fragment
 import org.jetbrains.anko.*
 
-public inline fun Fragment.dip(value: Int): Int = activity.dip(value)
+inline fun Fragment.dip(value: Int): Int = activity.dip(value)
 
-public inline fun Fragment.dip(value: Float): Int = activity.dip(value)
+inline fun Fragment.dip(value: Float): Int = activity.dip(value)
 
-public inline fun Fragment.sp(value: Int): Int = activity.sp(value)
+inline fun Fragment.sp(value: Int): Int = activity.sp(value)
 
-public inline fun Fragment.sp(value: Float): Int = activity.sp(value)
+inline fun Fragment.sp(value: Float): Int = activity.sp(value)
 
-public inline fun Fragment.px2dip(px: Int): Float = activity.px2dip(px)
+inline fun Fragment.px2dip(px: Int): Float = activity.px2dip(px)
 
-public inline fun Fragment.px2sp(px: Int): Float = activity.px2sp(px)
+inline fun Fragment.px2sp(px: Int): Float = activity.px2sp(px)
 
-public inline fun Fragment.dimen(resource: Int): Int = activity.dimen(resource)
+inline fun Fragment.dimen(resource: Int): Int = activity.dimen(resource)

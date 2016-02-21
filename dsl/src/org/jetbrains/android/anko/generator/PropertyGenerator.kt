@@ -48,21 +48,26 @@ class PropertyGenerator : Generator<PropertyElement> {
 
         val propertyWithGetters = getters.map { getter ->
             val property = getter.toProperty()
-            val settersList = setters.get(property.setterIdentifier) ?: listOf()
+            val settersList = setters[property.setterIdentifier] ?: listOf()
 
             val (best, others) = settersList.partition {
-                it.method.args.size() == 1 && it.method.args[0] == getter.method.returnType
+                it.method.args.size == 1 && it.method.args[0] == getter.method.returnType
             }
 
             existingProperties.add(property.setterIdentifier)
             PropertyElement(property.name, getter, best + others)
         }
-        val propertyWithoutGetters = setters.values().map { setters ->
-            val property = setters.first().toProperty()
+        val propertyWithoutGetters = setters.values.map { s ->
+            val property = s.first().toProperty()
 
             val id = property.setterIdentifier
-            if (property.propertyFqName in config.propertiesWithoutGetters && id !in existingProperties) {
-                PropertyElement(property.name, null, setters)
+            if (id !in existingProperties) {
+                if (property.propertyFqName in config.propertiesWithoutGetters) {
+                    PropertyElement(property.name, null, s)
+                } else {
+                    log.d("PropertyGenerator # Property was not generated for $id")
+                    null
+                }
             } else null
         }.filterNotNull()
         return propertyWithoutGetters + propertyWithGetters

@@ -22,11 +22,11 @@ import org.jetbrains.android.anko.utils.getPackageName
 import sun.plugin.dom.exception.InvalidStateException
 import java.io.File
 
-public interface SourceProvider {
+interface SourceProvider {
     fun parse(fqName: String): CompilationUnit?
 }
 
-public class AndroidHomeSourceProvider(version: Int) : SourceProvider {
+class AndroidHomeSourceProvider(version: Int) : SourceProvider {
     private val baseDir: File
 
     init {
@@ -41,7 +41,7 @@ public class AndroidHomeSourceProvider(version: Int) : SourceProvider {
         val packageDir = File(baseDir, packageName.replace('.', '/'))
         if (!packageDir.exists()) return null
 
-        val filename = fqName.substring(packageName.length() + 1).substringBefore('.') + ".java"
+        val filename = fqName.substring(packageName.length + 1).substringBefore('.') + ".java"
         val file = File(packageDir, filename)
         if (!file.exists()) return null
 

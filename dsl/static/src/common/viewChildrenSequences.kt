@@ -14,16 +14,46 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("ViewChildrenSequencesKt")
 package org.jetbrains.anko
 
 import android.view.*
 import java.util.*
 
-public fun View.childrenSequence(): Sequence<View> = ViewChildrenSequence(this)
+inline fun ViewGroup.forEachChild(f: (View) -> Unit) {
+    for (i in 0..childCount - 1) {
+        f(getChildAt(i))
+    }
+}
 
-public fun View.childrenRecursiveSequence(): Sequence<View> = ViewChildrenRecursiveSequence(this)
+inline fun ViewGroup.forEachChildWithIndex(f: (Int, View) -> Unit) {
+    for (i in 0..childCount - 1) {
+        f(i, getChildAt(i))
+    }
+}
+
+inline fun ViewGroup.firstChild(predicate: (View) -> Boolean): View {
+    for (i in 0..childCount - 1) {
+        val child = getChildAt(i)
+        if (predicate(child)) {
+            return child
+        }
+    }
+    throw NoSuchElementException("No element matching predicate was found.")
+}
+
+inline fun ViewGroup.firstChildOrNull(predicate: (View) -> Boolean): View? {
+    for (i in 0..childCount - 1) {
+        val child = getChildAt(i)
+        if (predicate(child)) {
+            return child
+        }
+    }
+    return null
+}
+
+fun View.childrenSequence(): Sequence<View> = ViewChildrenSequence(this)
+
+fun View.childrenRecursiveSequence(): Sequence<View> = ViewChildrenRecursiveSequence(this)
 
 private class ViewChildrenSequence(private val view: View) : Sequence<View> {
     override fun iterator(): Iterator<View> {
@@ -89,7 +119,7 @@ private class ViewChildrenRecursiveSequence(private val view: View) : Sequence<V
         @Suppress("NOTHING_TO_INLINE")
         private inline fun <T: Any> MutableList<T>.removeLast(): T? {
             if (isEmpty()) return null
-            return remove(size() - 1)
+            return removeAt(size - 1)
         }
     }
 }

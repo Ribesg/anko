@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("CustomKt")
 package org.jetbrains.anko.custom
 
 import android.app.Activity
@@ -25,7 +23,7 @@ import android.view.ViewManager
 import org.jetbrains.anko.internals.AnkoInternals
 
 
-public inline fun <T : View> ViewManager.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
+inline fun <T : View> ViewManager.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
     val ctx = AnkoInternals.getContext(this)
     val view = factory(ctx)
     view.init()
@@ -33,28 +31,28 @@ public inline fun <T : View> ViewManager.ankoView(factory: (ctx: Context) -> T, 
     return view
 }
 
-public inline fun <T : View> Context.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
+inline fun <T : View> Context.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
     val view = factory(this)
     view.init()
     AnkoInternals.addView(this, view)
     return view
 }
 
-public inline fun <T : View> Activity.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
+inline fun <T : View> Activity.ankoView(factory: (ctx: Context) -> T, init: T.() -> Unit): T {
     val view = factory(this)
     view.init()
     AnkoInternals.addView(this, view)
     return view
 }
 
-public inline fun <reified T : View> ViewManager.customView(init: T.() -> Unit): T {
+inline fun <reified T : View> ViewManager.customView(init: T.() -> Unit): T {
     return ankoView({ ctx -> AnkoInternals.initiateView(ctx, T::class.java) }) { init() }
 }
 
-public inline fun <reified T : View> Context.customView(init: T.() -> Unit): T {
+inline fun <reified T : View> Context.customView(init: T.() -> Unit): T {
     return ankoView({ ctx -> AnkoInternals.initiateView(ctx, T::class.java) }) { init() }
 }
 
-public inline fun <reified T : View> Activity.customView(init: T.() -> Unit): T {
+inline fun <reified T : View> Activity.customView(init: T.() -> Unit): T {
     return ankoView({ ctx -> AnkoInternals.initiateView(ctx, T::class.java) }) { init() }
 }

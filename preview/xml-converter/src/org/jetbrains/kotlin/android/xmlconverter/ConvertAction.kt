@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import java.io.File
 import java.io.IOException
 
-public class ConvertAction : AnAction() {
+class ConvertAction : AnAction() {
 
     private class FileToConvert(val xmlFile: VirtualFile, val ktFile: File)
 
@@ -144,10 +144,10 @@ public class ConvertAction : AnAction() {
 
     private fun FileToConvert.convert(project: Project) {
         try {
-            ktFile.writeText(XmlConverter.convert(xmlFile.contentsToByteArray().toString("UTF-8")))
+            ktFile.writeText(XmlConverter.convert(xmlFile.contentsToByteArray().toString(charset("UTF-8"))))
         }
         catch (e: IOException) {
-            MessagesEx.error(project, e.getMessage()).showLater()
+            MessagesEx.error(project, e.message).showLater()
         }
     }
 

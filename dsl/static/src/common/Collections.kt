@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("CollectionsKt")
 package org.jetbrains.anko.collections
 
 inline fun <T> List<T>.forEachByIndex(f: (T) -> Unit) {
-    val lastIndex = size() - 1
+    val lastIndex = size - 1
     for (i in 0..lastIndex) {
         f(get(i))
     }
 }
 
 inline fun <T> List<T>.forEachWithIndex(f: (Int, T) -> Unit) {
-    val lastIndex = size() - 1
+    val lastIndex = size - 1
     for (i in 0..lastIndex) {
         f(i, get(i))
     }
 }
 
 inline fun <T> List<T>.forEachReversed(f: (T) -> Unit) {
-    var i = size() - 1
+    var i = size - 1
     while (i >= 0) {
         f(get(i))
         i--
@@ -41,17 +39,17 @@ inline fun <T> List<T>.forEachReversed(f: (T) -> Unit) {
 }
 
 inline fun <T> List<T>.forEachReversedWithIndex(f: (Int, T) -> Unit) {
-    var i = size() - 1
+    var i = size - 1
     while (i >= 0) {
         f(i, get(i))
         i--
     }
 }
 
-public fun <F, S> android.util.Pair<F, S>.toKotlinPair(): Pair<F, S> {
+fun <F, S> android.util.Pair<F, S>.toKotlinPair(): Pair<F, S> {
     return first to second
 }
 
-public fun <F, S> Pair<F, S>.toAndroidPair(): android.util.Pair<F, S> {
+fun <F, S> Pair<F, S>.toAndroidPair(): android.util.Pair<F, S> {
     return android.util.Pair(first, second)
 }

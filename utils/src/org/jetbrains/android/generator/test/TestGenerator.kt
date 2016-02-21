@@ -20,7 +20,7 @@ import org.jetbrains.android.anko.config.AnkoFile
 import org.jetbrains.android.anko.config.ConfigurationTune
 import java.io.File
 
-public fun Context.generate() {
+fun Context.generate() {
 
     functionalDslTests {
         functionalDslTest("ComplexListenerClassTest", AnkoFile.LISTENERS) {
@@ -39,8 +39,8 @@ public fun Context.generate() {
 
         functionalDslTest("ViewTest", AnkoFile.VIEWS) {
             file(AnkoFile.VIEWS)
-            tune(ConfigurationTune.HELPER_CONSTRUCTORS)
             tune(ConfigurationTune.TOP_LEVEL_DSL_ITEMS)
+            tune(ConfigurationTune.HELPER_CONSTRUCTORS)
         }
 
         functionalDslTest("PropertyTest", AnkoFile.PROPERTIES) {
@@ -56,10 +56,6 @@ public fun Context.generate() {
             tune(ConfigurationTune.SIMPLE_LISTENERS)
         }
 
-        functionalDslTest("InterfaceWorkaroundsTest", AnkoFile.INTERFACE_WORKAROUNDS_JAVA) {
-            file(AnkoFile.INTERFACE_WORKAROUNDS_JAVA)
-        }
-
         functionalDslTest("SqlParserHelpersTest", AnkoFile.SQL_PARSER_HELPERS) {
             file(AnkoFile.SQL_PARSER_HELPERS)
         }
@@ -71,4 +67,4 @@ public fun Context.generate() {
 }
 
 private fun ktFiles(category: String) = File("dsl/testData/$category")
-        .listFiles { it.name.endsWith(".kt") }?.map { it.name.replace(".kt", "") } ?: listOf()
+        .listFiles { file -> file.name.endsWith(".kt") }?.map { it.name.replace(".kt", "") } ?: listOf()

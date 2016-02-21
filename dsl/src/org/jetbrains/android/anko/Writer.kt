@@ -32,7 +32,7 @@ class Writer(private val renderFacade: RenderFacade) {
 
     fun write() {
         val versionType = config.getTargetArtifactType()
-        AnkoFile.values().forEach { file ->
+        values().forEach { file ->
             if (config[file] && versionType in file.types && file.shouldBeWritten(config)) {
                 write(file)
             }
@@ -53,18 +53,12 @@ class Writer(private val renderFacade: RenderFacade) {
     }
 
     private fun write(file: AnkoFile): Unit = when (file) {
-        INTERFACE_WORKAROUNDS_JAVA -> writeInterfaceWorkarounds()
         LAYOUTS -> writeLayouts()
         LISTENERS -> writeListeners()
         PROPERTIES -> writeProperties()
         SERVICES -> writeServices()
         SQL_PARSER_HELPERS -> writeSqlParserHelpers()
         VIEWS -> writeViews()
-    }
-
-    fun writeInterfaceWorkarounds() {
-        val imports = "package ${config.outputPackage}.workarounds;"
-        write(AnkoFile.INTERFACE_WORKAROUNDS_JAVA, InterfaceWorkaroundsRenderer::class.java, imports, false)
     }
 
     private fun writeLayouts() {
@@ -120,8 +114,7 @@ class Writer(private val renderFacade: RenderFacade) {
 
         PrintWriter(file).useIt {
             if (config.generatePackage && generatePackage) {
-                val facadeFilename = config.version.toCamelCase('-') + subsystem.name().toLowerCase().toCamelCase()
-                println("@file:JvmMultifileClass")
+                val facadeFilename = config.version.toCamelCase('-') + subsystem.name.toLowerCase().toCamelCase()
                 println("@file:JvmName(\"${facadeFilename}Kt\")")
                 println("package ${config.outputPackage}\n")
             }

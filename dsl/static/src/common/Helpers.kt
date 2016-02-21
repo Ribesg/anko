@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("HelpersKt")
 package org.jetbrains.anko
 
 import android.app.Activity
@@ -23,26 +21,30 @@ import android.app.Fragment
 import android.content.Context
 import org.jetbrains.anko.internals.AnkoInternals
 
-public open class AnkoException(message: String = "") : RuntimeException(message)
-public class PropertyWithoutGetterException(name: String) : AnkoException("'$name' property does not have a getter")
+open class AnkoException(message: String = "") : RuntimeException(message)
+class PropertyWithoutGetterException(name: String) : AnkoException("'$name' property does not have a getter")
 
 //returns 0xC0C0C0 for 0xC0
-public val Int.gray: Int
+val Int.gray: Int
     get() = this or (this shl 8) or (this shl 16)
 
 //returns 0xFFABCDEF for 0xABCDEF
-public val Int.opaque: Int
+val Int.opaque: Int
     get() = this or 0xff000000.toInt()
 
+fun Int.withAlpha(alpha: Int): Int {
+    require(alpha >= 0 && alpha <= 0xFF)
+    return this and 0x00FFFFFF or (alpha shl 24)
+}
 
-public enum class ScreenSize {
+enum class ScreenSize {
     SMALL,
     NORMAL,
     LARGE,
     XLARGE
 }
 
-public enum class UiMode {
+enum class UiMode {
     NORMAL,
     CAR,
     DESK,
@@ -51,15 +53,15 @@ public enum class UiMode {
     WATCH
 }
 
-public enum class Orientation {
+enum class Orientation {
     PORTRAIT,
     LANDSCAPE,
     SQUARE
 }
 
-public inline fun <T: Any> Context.configuration(
+inline fun <T: Any> Context.configuration(
         screenSize: ScreenSize? = null,
-        density: Range<Int>? = null,
+        density: ClosedRange<Int>? = null,
         language: String? = null,
         orientation: Orientation? = null,
         long: Boolean? = null,
@@ -73,9 +75,9 @@ public inline fun <T: Any> Context.configuration(
 ): T? = if (AnkoInternals.testConfiguration(this, screenSize, density, language, orientation, long,
         fromSdk, sdk, uiMode, nightMode, rightToLeft, smallestWidth)) init() else null
 
-public inline fun <T: Any> Activity.configuration(
+inline fun <T: Any> Activity.configuration(
         screenSize: ScreenSize? = null,
-        density: Range<Int>? = null,
+        density: ClosedRange<Int>? = null,
         language: String? = null,
         orientation: Orientation? = null,
         long: Boolean? = null,
@@ -89,9 +91,9 @@ public inline fun <T: Any> Activity.configuration(
 ): T? = if (AnkoInternals.testConfiguration(this, screenSize, density, language, orientation, long,
         fromSdk, sdk, uiMode, nightMode, rightToLeft, smallestWidth)) init() else null
 
-public inline fun <T: Any> UiHelper.configuration(
+inline fun <T: Any> AnkoContext<*>.configuration(
         screenSize: ScreenSize? = null,
-        density: Range<Int>? = null,
+        density: ClosedRange<Int>? = null,
         language: String? = null,
         orientation: Orientation? = null,
         long: Boolean? = null,
@@ -105,9 +107,9 @@ public inline fun <T: Any> UiHelper.configuration(
 ): T? = if (AnkoInternals.testConfiguration(ctx, screenSize, density, language, orientation, long,
         fromSdk, sdk, uiMode, nightMode, rightToLeft, smallestWidth)) init() else null
 
-public inline fun <T: Any> Fragment.configuration(
+inline fun <T: Any> Fragment.configuration(
         screenSize: ScreenSize? = null,
-        density: Range<Int>? = null,
+        density: ClosedRange<Int>? = null,
         language: String? = null,
         orientation: Orientation? = null,
         long: Boolean? = null,

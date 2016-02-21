@@ -25,7 +25,8 @@ import java.io.File
 
 open class DefaultAnkoConfiguration(
         outputDirectory: File,
-        override val version: String
+        override val version: String,
+        override val generatorOptions: Set<GeneratorOption>
 ) : AnkoConfiguration() {
     override val outputPackage: String
 
@@ -40,6 +41,7 @@ open class DefaultAnkoConfiguration(
     override val annotationManager: AnnotationManager
     override val sourceManager: SourceManager
     override val templateManager: TemplateManager
+    override val logManager: LogManager
 
     init {
         val zipFileProvider = ZipFileAnnotationProvider(File("lib/Kotlin/kotlinc/lib/kotlin-android-sdk-annotations.jar"))
@@ -52,10 +54,18 @@ open class DefaultAnkoConfiguration(
 
         templateManager = TemplateManager(MustacheTemplateProvider(File("dsl/props/templates")))
 
+        logManager = LogManager(this)
+
         val artifactType = getTargetArtifactType()
         outputPackage = "org.jetbrains.anko" + when (artifactType) {
             TargetArtifactType.COMMON, TargetArtifactType.PLATFORM -> ""
             else -> "." + version.replace('-', '.').toLowerCase()
+        }
+
+        for (line in propertiesWithoutGetters) {
+            if (!line.matches("[A-Za-z0-9]+(\\.((?!set)[A-Za-z0-9]+))*".toRegex())) {
+                logManager.e("Invalid line in properties_without_getters.txt: $line")
+            }
         }
     }
 

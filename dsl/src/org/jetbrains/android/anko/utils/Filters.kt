@@ -19,15 +19,15 @@ package org.jetbrains.android.anko.utils
 import java.io.File
 import java.io.FileFilter
 
-public class JarFileFilter : FileFilter {
+internal class JarFileFilter : FileFilter {
     override fun accept(path: File): Boolean {
-        return path.isFile && path.getName().toLowerCase().endsWith(".jar")
+        return path.isFile && path.name.toLowerCase().endsWith(".jar")
     }
 }
 
-public class AndroidVersionDirectoryFilter : FileFilter {
+class AndroidVersionDirectoryFilter : FileFilter {
     override fun accept(path: File): Boolean {
         return path.isDirectory && !path.isHidden
-                && path.listFiles { it.name.endsWith(".jar") }?.isNotEmpty() ?: false
+                && path.listFiles { file -> file.name.endsWith(".jar") }?.isNotEmpty() ?: false
     }
 }

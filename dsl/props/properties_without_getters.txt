@@ -1,3 +1,5 @@
+android.view.View.backgroundColor
+android.view.View.backgroundResource
 android.view.View.minimumHeight
 android.view.View.minimumWidth
 android.widget.TextView.enabled
@@ -13,6 +15,8 @@ android.widget.TextView.maxEms
 android.widget.TextView.singleLine
 android.widget.TextView.marqueeRepeatLimit
 android.widget.TextView.cursorVisible
+android.widget.TextView.gravity
+android.widget.ImageView.imageResource
 android.widget.ImageView.imageURI
 android.widget.ImageView.imageBitmap
 android.widget.RelativeLayout.gravity
@@ -20,3 +24,8 @@ android.widget.LinearLayout.gravity
 android.widget.Gallery.gravity
 android.widget.Spinner.gravity
 android.widget.GridView.gravity
+android.widget.RelativeLayout.horizontalGravity
+android.widget.RelativeLayout.verticalGravity
+android.widget.LinearLayout.dividerDrawable
+android.widget.LinearLayout.horizontalGravity
+android.widget.LinearLayout.verticalGravity

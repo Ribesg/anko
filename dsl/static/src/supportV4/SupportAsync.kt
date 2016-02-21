@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-@file:JvmMultifileClass
-@file:JvmName("SupportAsyncKt")
 package org.jetbrains.anko.support.v4
 
 import android.support.v4.app.Fragment
 import org.jetbrains.anko.*
 
-public fun <T: Fragment> AnkoAsyncContext<T>.supportFragmentUiThread(f: (T) -> Unit) {
+fun <T: Fragment> AnkoAsyncContext<T>.supportFragmentUiThread(f: (T) -> Unit) {
     val fragment = weakRef.get() ?: return
     if (fragment.isDetached) return
-    val activity = fragment.getActivity() ?: return
+    val activity = fragment.activity ?: return
     activity.runOnUiThread { f(fragment) }
 }
 
-@deprecated("Use onUiThread() instead", ReplaceWith("onUiThread(f)"))
-public inline fun Fragment.uiThread(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) f: () -> Unit) {
+@Deprecated("Use onUiThread() instead", ReplaceWith("onUiThread(f)"))
+inline fun Fragment.uiThread(crossinline f: () -> Unit) {
     activity.onUiThread { f() }
 }
 
-public inline fun Fragment.onUiThread(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) f: () -> Unit) {
+inline fun Fragment.onUiThread(crossinline f: () -> Unit) {
     activity.onUiThread { f() }
 }

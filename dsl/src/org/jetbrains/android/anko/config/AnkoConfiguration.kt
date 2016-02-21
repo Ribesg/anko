@@ -18,6 +18,7 @@ package org.jetbrains.android.anko.config
 
 import org.jetbrains.android.anko.annotations.AnnotationManager
 import org.jetbrains.android.anko.config.TargetArtifactType.COMMON
+import org.jetbrains.android.anko.config.TargetArtifactType.SQLITE
 import org.jetbrains.android.anko.config.TargetArtifactType.PLATFORM
 import org.jetbrains.android.anko.config.TargetArtifactType.SUPPORT_V4
 import org.jetbrains.android.anko.config.TargetArtifactType.TOOLKIT
@@ -39,6 +40,8 @@ abstract class AnkoConfiguration {
 
     abstract val version: String
 
+    abstract val generatorOptions: Set<GeneratorOption>
+
     abstract val outputPackage: String
 
     abstract val outputDirectory: File
@@ -52,14 +55,16 @@ abstract class AnkoConfiguration {
     abstract val annotationManager: AnnotationManager
     abstract val sourceManager: SourceManager
     abstract val templateManager: TemplateManager
+    abstract val logManager: LogManager
 
-    public fun get(option: ConfigurationOption): Boolean = option in tunes || option in files
+    operator fun get(option: ConfigurationOption): Boolean = tunes.contains(option) || files.contains(option)
 
-    public abstract fun getOutputFile(ankoFile: AnkoFile): File
+    abstract fun getOutputFile(ankoFile: AnkoFile): File
 
-    public fun getTargetArtifactType(): TargetArtifactType {
+    fun getTargetArtifactType(): TargetArtifactType {
         return when {
             "common" == version -> COMMON
+            "sqlite" == version -> SQLITE
             "support-v4" == version -> SUPPORT_V4
             version.matches("sdk\\d{2}".toRegex()) -> PLATFORM
             else -> TOOLKIT
